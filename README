@@ -1,0 +1,188 @@
+BOBOC DIANA-ANDREEA 312CA
+Pentru rezolvarea problemei am folosit urmatoarele variabile:
+    -unsigned char *c-in care am retinut arena
+    -int n-in care am retinut nr de octeti ai arenei
+    -unsigned char command[50]-in care am retinut comanda data de la 
+        tastatura    
+Au fost necesare urmatoarele functii:
+    -int ALLOC (unsigned char *c,int l,int n) cu urmatoarea utilizare:
+    Variabila l va retine lungimea blocului de date ce va trebui alocat.
+    Prima data se verifica daca in arena exista vreun bloc:
+        =>In caz negativ,se verifica daca dimensiunea blocului de date ce trebuie 
+            alocat depaseste spatiul ramas gol al arenei:
+            =>In caz pozitiv se va returna 0;
+            =>In caz negativ se leaga noul bloc de date la indexul de start,se 
+            configureaza primii 12 octeti ai noului bloc si se returneaza indicele 
+            de start al noului bloc de date (4*sizeof(int));
+        =>In caz pozitiv se executa pasii se verifica daca ‪blocul de date ce trebuie 
+        alocat ar avea loc intre indexul de start si primul bloc de date:
+                =>In caz afirmativ,se leaga noul bloc,se actualizeaza indexul de 
+                start si primul bloc,se configureaza cei 12 octeti ai noului bloc 
+                si se returneaza indicele noului bloc de date:*(int*)&c[0]+3*sizeof(int);
+                =>In caz negativ,se cauta un loc liber pentru blocul de date ce 
+                trebuie alocat intre blocul de date curent si blocul de date 
+                urmator,cat timp blocul de date curent nu este ultimul bloc din 
+                arena.In cazul in care se gaseste loc liber,se leaga noul bloc de 
+                date,se actualizeaza primii 12 octeti ai blocului curent si blocului 
+                urmator,se configureaza primii 12 octeti ai noului bloc si se 
+                returneaza indicele noului bloc de date: *(int *)&c[i]+3*sizeof(int) 
+                (unde i este indicele de inceput al blocului curent).
+                Daca nu s-a gasit loc liber intre blocuri si s-a ajuns la ultimul 
+                bloc din arena,se verifica daca exista loc liber suficient dupa ultimul bloc:
+                =>In caz afirmativ se leaga noul bloc,se actualizeaza primii 12 
+                octeti ai ultimului bloc,se configureaza primii 12 octeti ai 
+                noului bloc si se returneaza indicele de inceput al noului bloc 
+                de date:*(int *)&c[i] + 3*sizeof(int) (unde i este indicele de 
+                inceput al ultimului bloc din arena).
+                
+        -void FILL(unsigned char *c,int i,int nr,int init, int n) cu urmatoarea 
+        utilizare:
+            Se vor initializa primii nr octeti,incepand cu octetul cu indicele i 
+            cu valoarea init.
+            
+        -void DUMP(unsigned char *c,int n) cu urmatoarea utilizare:
+            Se afiseaza o mapare a octetilor din arena,cu specificatiile precizate 
+            in enunt.
+                
+        -void FREE (unsigned char *c,int i,int n) cu urmatoarea utilizare:
+            In primul rand se verifica daca blocul de trebuie eliberat este primul 
+            din arena:
+                =>In caz afirmativ se verifica daca este si ultimul din arena:
+                    =>In caz afirmativ se actualizeaza valoarea indicelui de start 
+                    la 0.
+                    =>In caz negativ se face o legatura intre indicele de start 
+                    si blocul ce succede blocul ce trebuie eliberat.
+                =>In caz negativ se verifica daca este ultimul bloc din arena:
+                    =>In caz afirmativ se marcheaza blocul precedent celui ce 
+                    trebuie eliberat ca fiind ultimul din arena
+                    =>In caz negativ se face o legatura directa intre blocul 
+                    precedent si blocul urmator celui care trebuie eliberat.
+                    
+        -void SHOW (unsigned char *c,int n,unsigned char command [])  cu urmatoarea 
+        utilizare:
+            Aceasta functie identifica optiunea comenzii SHOW (ex:SHOW FREE,SHOW 
+            USAGE,SHOW ALLOCATIONS) si in functie de aceasta optiune executa o 
+            anumita parte de cod.
+            Am ales sa le scriu pe toate in cadrul aceleiasi functii deoarece am 
+            folosit rezultate de la SHOW FREE si la SHOW USAGE.
+            Pentru SHOW FREE se vor face urmatoarele:
+                S-au initializat variabilele free_blocks si free_octets cu 0.
+                Se verifica daca exista vreun bloc de date in arena:
+               =>In caz negativ free_blocks=1 si free_octets=n-sizeof(int);
+               =>In caz afirmativ se verifica daca exista spatiu liber intre indicele 
+               de start si primul bloc din arena.Daca exista se actualizeaza valoarea 
+               variabilelor free_blocks si free_octets.
+               Pentru fiecare bloc din arena,in afara de ultimul bloc,se verifica 
+               daca exista spatiu liber intre blocul curent si blocul urmator,iar 
+               in caz afirmativ se actualizeaza variabilele free_blocks si free_octets.
+               Se verifica daca exista spatiu liber dupa ultimul bloc din arena,
+               iar in caz afirmativ se actualizeaza variabilele free_blocks si 
+               free_octets.
+               La final se afiseaza free_blocks si free_octets doar daca optiunea 
+               comenzii SHOW este FREE.
+           Pentru SHOW USAGE se vor face urmatoarele:
+                S-au initializat variabilele used_blocks si used_octets cu 0.
+                Daca exista cel putin un bloc de date in arena,se parcurg toate 
+                blocurile pana la ultimul bloc din arena si se actualizeaza 
+                variabilele used_blocks si used_octets.
+                La final se incrementeaza used_blocks si se adauga si dimensiunea 
+                ultimului bloc de date din arena la used_octets.
+                In cazul in care optiunea era SHOW USAGE se afiseaza corespunzator 
+                enuntului.
+            Pentru SHOW ALLOCATIONS se vor face urmatoarele:
+                Se verifica daca exista cel putin un bloc de date in arena:
+                =>In caz negativ se afiseaza n-sizeof(int);
+                =>In caz afirmativ se verifica daca exista spatiu liber intre 
+                indicele de start si primul bloc de date,iar in caz afirmativ 
+                se afiseaza dimensiunea spatiului liber.
+                Pentru fiecare bloc de date din arena pana la ultimul bloc de 
+                date din arena se afiseaza dimensiunea acestuia si spatiul liber 
+                dintre blocul de date curent si cel urmator,daca acesta exista.
+                La final se afiseaza dimensiunea ultimului bloc de date din arena 
+                si daca exista,dimensiunea spatiului liber de dupa acesta.
+                
+    -int ALLOCALIGNED (unsigned char *c,int n,int l,int align) cu aceeasi utilizare 
+    ca a functiei ALLOC,cu exceptia urmatoarelor specificatii:
+        Pentru fiecare spatiu liber in care ar putea fi alocat noul bloc de date 
+        se cauta primul indice de start al acestuia care este divizibil cu align,
+        cat timp acesta nu depaseste spatiul liber gasit.
+    
+    -int REALLOC (unsigned char *c, int index , int size, int n) cu urmatoarea 
+    utilizare:
+        Se copiaza in vectorul de int octets[1000] valorile octetilor din blocul 
+        ce trebuie realocat.
+        Se elibereaza blocul de date ce incepe la indicele index.
+        Se aloca un nou bloc de date cu dimensiunea size.
+        Daca acesta a putut fi alocat:
+            In cazul in care noua dimensiune a blocului este mai mare decat vechea 
+            dimensiune a blocului se copiaza toate valorile din octets in noul 
+            bloc de date .
+            In cazul in care noua dimensiune a blocului este mai mica decat vechea 
+            dimensiune se copiaza in noul bloc de date doar primele size valori 
+            din octets.
+        La final se returneaza noul indice de start al blocului de date.
+        
+    -void SHOW_MAP (unsigned char *c,int n,int l) cu urmatoarea utilizare:
+        In variabila float x se va retine pasul in functie de care se face maparea.
+        In variabila float rest,initializata cu 0 se va retine nr de octeti ramasi 
+        neafisati in cazul blocurilor libere sau nr de octeti din blocurile libere 
+        sau blocurile de date imprumutati pentru afisarea stelutelor.
+        Variabila symbol va retine ce s-a afisat ultima data:
+            -1 pentru '*';
+            -0 pentru '.';
+        Pentru indexul de start se afiseaza un nr de '*' egal cu catul impartirii 
+        lui sizeof(int) la x.In cazul in care aceasta impartire a avut si un rest,
+        se va mai afisa o steluta,iar variabila rest va fi actualizata cu valoarea 
+        pasului - valoarea restului impartirii.In caz contrar,variabila rest va 
+        avea valoarea 0.
+        Daca exista cel putin un bloc de date in arena,se vor executa pasii urmatori:
+        Se verifica daca este loc liber intre indexul de start si primul bloc de 
+        date din arena.
+        =>In caz afirmativ se vor afisa un numar de  '.' egal cu catul impartirii 
+        dimensiunii spatiului liber - variabila rest la x.
+        In cazul in care impartirea va da cu rest,variabila rest va fi actualizata 
+        cu valoarea restului impartirii.In caz contrar, restul va avea valoarea 0.
+        Toate aceste actiuni vor avea loc doar in cazul in care valoarea dimensiunii 
+        spatiului liber - variabila rest este >0.In cazul in care este negativa,
+        din valoarea variabilei rest se va scadea dimensiunea spatiului liber.
+        Pentru fiecare bloc de date in afara de ultimul din arena se vor efectua 
+        actiunile:
+            In functie de valoarea 0/1 a variabilei symbol, se va aduna/scadea 
+            valoarea variabilei rest la dimensiunea blocului de date curent,
+            valoarea finala fiind retinuta in variabila limit.
+            Se vor afisa un nr de '*' egal cu catul impartirii lui limit la x.Se 
+            va verifica daca aceasta impartire a dat cu rest,iar in caz afirmativ 
+            se actualizeaza valoarea variabilei rest cu x - restul impartirii,in 
+            caz negativ valoarea variabilei rest va fi 0.
+            Aceste actiuni vor avea loc doar in cazul in care valoarea variabilei 
+            limit va fi > 0,in caz negativ se va scadea din valoarea variabilei 
+            rest dimensiunea blocului curent de date.
+            In cazul in care exista spatiu liber intre blocul de date curent si 
+            blocul de date urmator:
+                Se vor afisa un nr de '.' egal cu catul impartirii dimensiunii 
+                spatiului liber - valoarea variabilei rest la x.Daca aceasta 
+                impartire a dat cu rest, valoarea variabilei rest se actualizeaza 
+                cu restul impartirii.In caz contrar rest=0.
+                Aceste actiuni vor avea loc doar in cazul in care catul impartirii 
+                este >0,in caz contrar se va scadea din valoarea variabilei rest 
+                dimensiunea spatiului liber.
+            Pentru ultimul bloc de date din arena se va proceda la fel ca si pentru 
+            oricare alt bloc de date din arena.
+            Se verifica daca exista spatiu liber dupa ultiml bloc de date din arena,
+            iar in caz afirmativ se afiseaza un nr de '.' egal cu catul impartirii 
+            dimensiunii spatiului liber - valoarea variabilei rest la x.In cazul 
+            in care catul impartirii este >0 si impartirea a dat cu rest,se va 
+            afisa inca un caracter '.'.
+         Daca nu exista niciun bloc in arena,se va afisa un numar de '.' egal cu 
+         catul impartirii dimensiunii spatiului liber - valoarea variabilei rest 
+         la x.In cazul in care catul este >0 si impartirea a dat cu rest,se va 
+         afisa inca un caracter '.'.
+         La fiecare afisare se va tine cont sa se afiseze pe o linie doar 80 de 
+         caractere prin intermediul variabilei k ce retine cati octeti au fost
+         afisati pana la momentul respectiv si de asemenea se va actualiza 
+         valoarea variabilei symbol in functie de afisarea '*' sau '.' .  
+ In main(), dupa citirea comenzii de INITIALIZE s-au alocat dinamic cei n octeti
+ si s-au initializat cu 0.
+ Se vor citi comenzi pana la comanda FINALIZE, iar dupa ce fiecare comanda a fost 
+ identificata se va executa functia corespunzatoare.
+ Se elibereaza memoria.
